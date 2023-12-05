@@ -5,7 +5,7 @@ import "strings"
 func NewHostsEntry(lineIn string) Entry {
 	trLineIn := strings.ReplaceAll(strings.Trim(lineIn, "\r\n"), "	", " ")
 	lineSplt := strings.Split(trLineIn, " ")
-	if len(lineSplt) == 1 && strings.HasPrefix(trLineIn, "#") {
+	if len(lineSplt) == 1 && strings.HasPrefix(strings.TrimPrefix(" ", trLineIn), "#") {
 		return Entry{
 			IPAddress: "",
 			Domains:   nil,
