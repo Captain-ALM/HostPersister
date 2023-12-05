@@ -1,0 +1,15 @@
+# Host Persister Service
+[Unit]
+Description=Host Persister Service
+
+[Service]
+WorkingDirectory=/etc/hostpersister
+ExecStart=/usr/local/bin/hostpersister
+User=root
+Group=root
+Type=simple
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
