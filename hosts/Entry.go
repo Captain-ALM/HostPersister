@@ -3,7 +3,7 @@ package hosts
 import "strings"
 
 func NewHostsEntry(lineIn string) Entry {
-	trLineIn := strings.Trim(lineIn, "\r\n")
+	trLineIn := strings.ReplaceAll(strings.Trim(lineIn, "\r\n"), "	", " ")
 	lineSplt := strings.Split(trLineIn, " ")
 	if len(lineSplt) == 1 && strings.HasPrefix(trLineIn, "#") {
 		return Entry{
@@ -14,6 +14,9 @@ func NewHostsEntry(lineIn string) Entry {
 	} else if len(lineSplt) > 1 {
 		var theDomains []string
 		for i := 1; i < len(lineSplt); i++ {
+			if lineSplt[i] == "" {
+				continue
+			}
 			if strings.HasPrefix(lineSplt[i], "#") {
 				break
 			}
