@@ -9,58 +9,65 @@ import (
 const readBufferSize = 8192
 
 func NewHostsFile(filePath string) (*File, error) {
-	theFile, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
+	theHostFile := &File{
+		filePath: filePath,
 	}
-	defer theFile.Close()
-	var theEntries []Entry
-	var lenIn int
-	lineEnding := ""
-	theCBuffer := ""
-	theBuffer := make([]byte, readBufferSize)
-	for err == nil {
-		lenIn, err = theFile.Read(theBuffer)
-		if lenIn > 0 {
-			theCBuffer += string(theBuffer[:lenIn])
-			if lineEnding == "" {
-				if strings.Contains(theCBuffer, "\r\n") {
-					lineEnding = "\r\n"
-				} else if strings.Contains(theCBuffer, "\r") {
-					lineEnding = "\r"
-				} else if strings.Contains(theCBuffer, "\n") {
-					lineEnding = "\n"
-				}
-			}
-			if lineEnding == "\r\n" {
-				strings.ReplaceAll(theCBuffer, "\r\n", "\n")
-			} else if lineEnding == "\r" {
-				strings.ReplaceAll(theCBuffer, "\r", "\n")
-			}
-			splt := strings.Split(theCBuffer, "\n")
-			for i := 0; i < len(splt)-1; i++ {
-				theEntries = append(theEntries, NewHostsEntry(splt[i]))
-			}
-			theCBuffer = splt[len(splt)-1]
-		}
+	err := theHostFile.ReadHostsFile()
+	if err == nil {
+		return theHostFile, nil
 	}
-	if err != io.EOF {
-		return nil, err
-	}
-	if theCBuffer != "" {
-		theEntries = append(theEntries, NewHostsEntry(theCBuffer))
-	}
-	return &File{
-		filePath:   filePath,
-		Entries:    theEntries,
-		lineEnding: lineEnding,
-	}, nil
+	return nil, err
 }
 
 type File struct {
 	filePath   string
 	Entries    []Entry
 	lineEnding string
+}
+
+func (f *File) ReadHostsFile() error {
+	f.Entries = nil
+	theFile, err := os.Open(f.filePath)
+	if err != nil {
+		return err
+	}
+	defer theFile.Close()
+	var lenIn int
+	f.lineEnding = ""
+	theCBuffer := ""
+	theBuffer := make([]byte, readBufferSize)
+	for err == nil {
+		lenIn, err = theFile.Read(theBuffer)
+		if lenIn > 0 {
+			theCBuffer += string(theBuffer[:lenIn])
+			if f.lineEnding == "" {
+				if strings.Contains(theCBuffer, "\r\n") {
+					f.lineEnding = "\r\n"
+				} else if strings.Contains(theCBuffer, "\r") {
+					f.lineEnding = "\r"
+				} else if strings.Contains(theCBuffer, "\n") {
+					f.lineEnding = "\n"
+				}
+			}
+			if f.lineEnding == "\r\n" {
+				strings.ReplaceAll(theCBuffer, "\r\n", "\n")
+			} else if f.lineEnding == "\r" {
+				strings.ReplaceAll(theCBuffer, "\r", "\n")
+			}
+			splt := strings.Split(theCBuffer, "\n")
+			for i := 0; i < len(splt)-1; i++ {
+				f.Entries = append(f.Entries, NewHostsEntry(splt[i]))
+			}
+			theCBuffer = splt[len(splt)-1]
+		}
+	}
+	if err != io.EOF {
+		return err
+	}
+	if theCBuffer != "" {
+		f.Entries = append(f.Entries, NewHostsEntry(theCBuffer))
+	}
+	return nil
 }
 
 func (f File) WriteHostsFile() error {

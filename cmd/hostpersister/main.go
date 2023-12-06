@@ -62,6 +62,9 @@ func main() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+		//Finished notifier:
+		finNotf := make(chan bool, 1)
+
 		z := time.Now().Sub(y)
 		log.Printf("[Main] Took '%s' to fully initialize modules\n", z.String())
 
@@ -69,9 +72,19 @@ func main() {
 		syncDur := time.Duration(syncTime) * time.Millisecond
 
 		go func(exec *bool) {
+			executePersistence(hostsFile, sourceFile, overwriteMode)
+			sleep(syncDur, finNotf)
 			for *exec {
+				err := hostsFile.ReadHostsFile()
+				if err != nil {
+					log.Fatalln("Failed to load HOSTS_FILE")
+				}
+				err = sourceFile.ReadHostsFile()
+				if err != nil {
+					log.Fatalln("Failed to load SOURCE_FILE")
+				}
 				executePersistence(hostsFile, sourceFile, overwriteMode)
-				time.Sleep(syncDur)
+				sleep(syncDur, finNotf)
 			}
 		}(&exec)
 
@@ -80,6 +93,7 @@ func main() {
 			fmt.Printf("\n")
 
 			*exec = false
+			finNotf <- true
 
 			a := time.Now()
 			log.Printf("[Main] Signalling program exit...\n")
@@ -105,5 +119,14 @@ func executePersistence(hostsFile *hosts.File, sourceFile *hosts.File, ovrw bool
 	err := hostsFile.WriteHostsFile()
 	if err != nil {
 		log.Println("[Main] Error Writing Hosts File.")
+	}
+}
+
+func sleep(d time.Duration, n chan bool) {
+	select {
+	case <-n:
+		break
+	case <-time.After(d):
+		break
 	}
 }
