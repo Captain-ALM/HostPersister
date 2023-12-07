@@ -3,8 +3,8 @@
 Description=Host Persister Service (Dev)
 
 [Service]
-WorkingDirectory=/etc/hostpersister
-ExecStart=/usr/local/bin/hostpersister
+WorkingDirectory=/etc/hostpersister_
+ExecStart=/usr/local/bin/hostpersister_
 User=root
 Group=root
 Type=simple
